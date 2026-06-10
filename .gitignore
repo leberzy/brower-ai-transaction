@@ -1,0 +1,54 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# --- 环境变量与密钥（保留 .env.example）---
+.env
+.env.local
+.env.*.local
+
+# --- 本地数据库 ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- 日志与运行时 ---
+*.log
+logs/
+
+# --- IDE / 编辑器 ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- 操作系统 ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# --- Chrome 扩展打包产物（若后续添加构建流程）---
+extension/*.zip
+extension/dist/
+node_modules/

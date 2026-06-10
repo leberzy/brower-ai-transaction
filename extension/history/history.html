@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>翻译历史看板 - AI 划词翻译</title>
+  <link rel="stylesheet" href="history.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>翻译历史看板</h1>
+      <span id="user-badge" class="badge hidden"></span>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-refresh" class="btn secondary">刷新</button>
+      <button id="btn-create" class="btn primary">新建记录</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="login-prompt" class="empty-state hidden">
+      <p>请先登录插件后再查看历史记录</p>
+      <button id="btn-go-login" class="btn primary">打开插件登录</button>
+    </div>
+
+    <div id="board" class="board hidden">
+      <div class="toolbar">
+        <input type="search" id="search-input" placeholder="搜索原文或译文…" />
+        <span id="record-count" class="count"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-time">时间</th>
+              <th class="col-source">原文</th>
+              <th class="col-target">译文</th>
+              <th class="col-actions">操作</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+
+      <p id="empty-tip" class="empty-tip hidden">暂无记录，点击「新建记录」添加</p>
+      <button id="btn-load-more" class="btn secondary load-more hidden">加载更多</button>
+    </div>
+  </main>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-title">新建记录</h2>
+        <button id="modal-close" class="icon-btn" title="关闭">×</button>
+      </div>
+      <form id="record-form">
+        <input type="hidden" id="record-id" />
+        <label>
+          原文（英文）
+          <textarea id="source-text" rows="4" required placeholder="输入英文原文…"></textarea>
+        </label>
+        <label>
+          译文（中文）
+          <textarea id="translated-text" rows="4" required placeholder="输入中文译文…"></textarea>
+        </label>
+        <p id="form-error" class="error hidden"></p>
+        <div class="modal-footer">
+          <button type="button" id="btn-cancel" class="btn secondary">取消</button>
+          <button type="submit" id="btn-save" class="btn primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="view-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card modal-view">
+      <div class="modal-header">
+        <h2>记录详情</h2>
+        <button id="view-close" class="icon-btn" title="关闭">×</button>
+      </div>
+      <div class="view-body">
+        <div class="view-meta" id="view-meta"></div>
+        <div class="view-block">
+          <div class="view-label">原文</div>
+          <div id="view-source" class="view-content"></div>
+        </div>
+        <div class="view-block">
+          <div class="view-label">译文</div>
+          <div id="view-target" class="view-content view-target"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="view-edit" class="btn secondary">编辑</button>
+        <button type="button" id="view-delete" class="btn danger">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="history.js"></script>
+</body>
+</html>

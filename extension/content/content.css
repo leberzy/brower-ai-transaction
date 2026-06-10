@@ -1,0 +1,121 @@
+#ai-translate-toolbar,
+#ai-translate-panel {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+#ai-translate-toolbar {
+  position: absolute;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 4px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#ai-translate-toolbar button.at-translate-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: #2563eb;
+  color: #fff;
+  transition: background 0.15s;
+}
+
+#ai-translate-toolbar button.at-translate-btn:hover {
+  background: #1d4ed8;
+}
+
+#ai-translate-toolbar button.at-translate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#ai-translate-toolbar button.at-translate-btn.is-loading {
+  opacity: 0.5;
+}
+
+#ai-translate-panel {
+  position: absolute;
+  z-index: 2147483647;
+  width: 360px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+#ai-translate-panel .at-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #374151;
+}
+
+#ai-translate-panel .at-close {
+  all: unset;
+  cursor: pointer;
+  font-size: 18px;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+#ai-translate-panel .at-close:hover {
+  color: #374151;
+}
+
+#ai-translate-panel .at-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#ai-translate-panel .at-source {
+  padding: 8px 10px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+#ai-translate-panel .at-result {
+  padding: 8px 10px;
+  background: #eff6ff;
+  border-radius: 6px;
+  font-size: 13px;
+  word-break: break-word;
+  color: #1e40af;
+}
+
+#ai-translate-panel .at-error {
+  color: #dc2626;
+  font-size: 13px;
+}
+
+#ai-translate-panel .at-loading {
+  color: #6b7280;
+  font-size: 13px;
+}

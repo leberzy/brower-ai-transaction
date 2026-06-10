@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 划词翻译</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>AI 划词翻译</h1>
+
+    <div id="auth-section">
+      <div id="login-form" class="card">
+        <h2>登录</h2>
+        <label>用户名<input type="text" id="username" autocomplete="username" /></label>
+        <label>密码<input type="password" id="password" autocomplete="current-password" /></label>
+        <div class="btn-row">
+          <button id="btn-login" class="btn primary">登录</button>
+          <button id="btn-register" class="btn secondary">注册</button>
+        </div>
+        <p id="auth-error" class="error hidden"></p>
+      </div>
+
+      <div id="user-panel" class="card hidden">
+        <p>已登录：<strong id="display-username"></strong></p>
+        <button id="btn-logout" class="btn secondary">退出登录</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>设置</h2>
+      <label>API 地址<input type="text" id="api-base" placeholder="http://localhost:8000" /></label>
+      <button id="btn-save-api" class="btn secondary">保存</button>
+    </div>
+
+    <div id="history-section" class="card hidden">
+      <h2>翻译历史</h2>
+      <p class="hint">在独立看板中管理所有翻译记录，支持增删改查。</p>
+      <button id="btn-open-history" class="btn primary full-width">打开历史看板</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
