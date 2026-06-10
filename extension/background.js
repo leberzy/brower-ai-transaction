@@ -107,6 +107,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         });
         if (message.start_date) params.set("start_date", message.start_date);
         if (message.end_date) params.set("end_date", message.end_date);
+        if (message.is_learned === true) params.set("is_learned", "true");
+        if (message.is_favorited === true) params.set("is_favorited", "true");
         const data = await apiRequest(`/api/history?${params}`);
         return { ok: true, ...data };
       }
@@ -127,14 +129,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return { ok: true, item };
       }
       case "UPDATE_HISTORY": {
+        const body = {};
+        if (message.source_text !== undefined) body.source_text = message.source_text;
+        if (message.translated_text !== undefined) body.translated_text = message.translated_text;
+        if (message.source_lang !== undefined) body.source_lang = message.source_lang;
+        if (message.target_lang !== undefined) body.target_lang = message.target_lang;
+        if (message.is_learned !== undefined) body.is_learned = message.is_learned;
+        if (message.is_favorited !== undefined) body.is_favorited = message.is_favorited;
         const item = await apiRequest(`/api/history/${message.id}`, {
           method: "PUT",
-          body: JSON.stringify({
-            source_text: message.source_text,
-            translated_text: message.translated_text,
-            source_lang: message.source_lang,
-            target_lang: message.target_lang,
-          }),
+          body: JSON.stringify(body),
         });
         return { ok: true, item };
       }

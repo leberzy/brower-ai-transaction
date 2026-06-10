@@ -42,6 +42,12 @@
         <button id="btn-filter-date" class="btn secondary">按时间查询</button>
         <button id="btn-clear-date" class="btn secondary">清除时间</button>
       </div>
+      <div class="toolbar toolbar-status">
+        <span class="filter-label">状态筛选</span>
+        <button type="button" id="filter-learned" class="filter-chip" data-filter="learned">已学会</button>
+        <button type="button" id="filter-favorited" class="filter-chip" data-filter="favorited">收藏</button>
+        <button type="button" id="btn-clear-status" class="btn secondary sm">清除筛选</button>
+      </div>
 
       <div class="table-wrap">
         <table>
@@ -55,6 +61,7 @@
                   <button type="button" id="toggle-all-visible" class="eye-btn" title="全部显示/隐藏译文"></button>
                 </div>
               </th>
+              <th class="col-status">状态</th>
               <th class="col-actions">操作</th>
             </tr>
           </thead>

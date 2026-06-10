@@ -13,6 +13,8 @@ let viewingItem = null;
 let hiddenIds = new Set();
 let dateStart = "";
 let dateEnd = "";
+let filterLearned = false;
+let filterFavorited = false;
 
 async function send(type, payload = {}) {
   return chrome.runtime.sendMessage({ type, ...payload });
@@ -74,7 +76,25 @@ function updateCount() {
   if ($("search-input").value.trim()) {
     parts.push(`搜索匹配 ${filtered.length} 条`);
   }
+  if (filterLearned) parts.push("已学会");
+  if (filterFavorited) parts.push("收藏");
   $("record-count").textContent = parts.join(" · ");
+}
+
+function renderStatusCell(item) {
+  const learned = !!item.is_learned;
+  const favorited = !!item.is_favorited;
+  return `
+    <div class="status-cell">
+      <button type="button" class="status-btn${learned ? " is-on" : ""}" data-action="toggle-learned" data-status="learned">${learned ? "✓ 已学会" : "未学会"}</button>
+      <button type="button" class="status-btn${favorited ? " is-on" : ""}" data-action="toggle-favorited" data-status="favorited">${favorited ? "★ 收藏" : "☆ 收藏"}</button>
+    </div>
+  `;
+}
+
+function updateFilterChips() {
+  $("filter-learned").classList.toggle("is-active", filterLearned);
+  $("filter-favorited").classList.toggle("is-active", filterFavorited);
 }
 
 function renderTargetCell(item) {
@@ -97,7 +117,8 @@ function renderTable() {
 
   if (filtered.length === 0) {
     $("empty-tip").classList.remove("hidden");
-    const hasFilter = $("search-input").value.trim() || dateStart || dateEnd;
+    const hasFilter =
+      $("search-input").value.trim() || dateStart || dateEnd || filterLearned || filterFavorited;
     $("empty-tip").textContent = hasFilter
       ? "没有匹配的记录"
       : "暂无记录，点击「新建记录」添加";
@@ -112,6 +133,7 @@ function renderTable() {
       <td class="cell-time">${formatTime(item.created_at)}</td>
       <td><div class="cell-text cell-source" title="${escapeHtml(item.source_text)}">${escapeHtml(item.source_text)}</div></td>
       <td class="col-target-cell">${renderTargetCell(item)}</td>
+      <td>${renderStatusCell(item)}</td>
       <td>
         <div class="row-actions">
           <button class="btn secondary sm" data-action="view">查看</button>
@@ -151,10 +173,12 @@ function toggleAllVisibility() {
   renderTable();
 }
 
-function getDateFilterParams() {
+function getListFilterParams() {
   return {
     start_date: dateStart || undefined,
     end_date: dateEnd || undefined,
+    is_learned: filterLearned ? true : undefined,
+    is_favorited: filterFavorited ? true : undefined,
   };
 }
 
@@ -167,7 +191,7 @@ async function loadHistory(reset = false) {
   const resp = await send("GET_HISTORY", {
     skip: loadedTotal,
     limit: PAGE_SIZE,
-    ...getDateFilterParams(),
+    ...getListFilterParams(),
   });
   if (!resp?.ok) {
     alert(resp?.error || "加载失败");
@@ -177,7 +201,38 @@ async function loadHistory(reset = false) {
   allItems = reset ? resp.items : [...allItems, ...resp.items];
   loadedTotal = allItems.length;
   serverTotal = resp.total;
+  updateFilterChips();
   renderTable();
+}
+
+async function toggleItemStatus(id, field) {
+  const item = allItems.find((i) => i.id === id);
+  if (!item) return;
+
+  const resp = await send("UPDATE_HISTORY", {
+    id,
+    [field]: !item[field],
+  });
+  if (!resp?.ok) {
+    alert(resp?.error || "更新状态失败");
+    return;
+  }
+
+  Object.assign(item, resp.item);
+  if (viewingItem?.id === id) viewingItem = { ...item };
+  renderTable();
+}
+
+function toggleStatusFilter(type) {
+  if (type === "learned") filterLearned = !filterLearned;
+  if (type === "favorited") filterFavorited = !filterFavorited;
+  loadHistory(true);
+}
+
+function clearStatusFilter() {
+  filterLearned = false;
+  filterFavorited = false;
+  loadHistory(true);
 }
 
 function applyDateFilter() {
@@ -305,6 +360,9 @@ $("btn-load-more").addEventListener("click", () => loadHistory(false));
 $("search-input").addEventListener("input", renderTable);
 $("btn-filter-date").addEventListener("click", applyDateFilter);
 $("btn-clear-date").addEventListener("click", clearDateFilter);
+$("filter-learned").addEventListener("click", () => toggleStatusFilter("learned"));
+$("filter-favorited").addEventListener("click", () => toggleStatusFilter("favorited"));
+$("btn-clear-status").addEventListener("click", clearStatusFilter);
 $("toggle-all-visible").addEventListener("click", toggleAllVisibility);
 
 $("record-form").addEventListener("submit", saveRecord);

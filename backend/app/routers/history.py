@@ -26,6 +26,8 @@ def list_history(
     limit: int = Query(20, ge=1, le=100),
     start_date: date | None = Query(None, description="开始日期（含）"),
     end_date: date | None = Query(None, description="结束日期（含）"),
+    is_learned: bool | None = Query(None, description="筛选已学会"),
+    is_favorited: bool | None = Query(None, description="筛选收藏"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -43,6 +45,10 @@ def list_history(
             TranslationHistory.created_at
             <= datetime.combine(end_date, time.max, tzinfo=timezone.utc)
         )
+    if is_learned is not None:
+        q = q.filter(TranslationHistory.is_learned == is_learned)
+    if is_favorited is not None:
+        q = q.filter(TranslationHistory.is_favorited == is_favorited)
     total = q.with_entities(func.count(TranslationHistory.id)).scalar() or 0
     items = (
         q.order_by(desc(TranslationHistory.created_at))
@@ -65,6 +71,8 @@ def create_history(
         translated_text=body.translated_text,
         source_lang=body.source_lang,
         target_lang=body.target_lang,
+        is_learned=body.is_learned,
+        is_favorited=body.is_favorited,
     )
     db.add(record)
     db.commit()

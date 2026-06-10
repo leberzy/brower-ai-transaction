@@ -38,6 +38,8 @@ class TranslateResponse(BaseModel):
     translated_text: str
     source_lang: str
     target_lang: str
+    is_learned: bool = False
+    is_favorited: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -53,6 +55,8 @@ class HistoryCreate(BaseModel):
     translated_text: str = Field(min_length=1, max_length=10000)
     source_lang: str = Field(default="en", max_length=16)
     target_lang: str = Field(default="zh", max_length=16)
+    is_learned: bool = False
+    is_favorited: bool = False
 
 
 class HistoryUpdate(BaseModel):
@@ -60,3 +64,5 @@ class HistoryUpdate(BaseModel):
     translated_text: str | None = Field(default=None, min_length=1, max_length=10000)
     source_lang: str | None = Field(default=None, max_length=16)
     target_lang: str | None = Field(default=None, max_length=16)
+    is_learned: bool | None = None
+    is_favorited: bool | None = None
