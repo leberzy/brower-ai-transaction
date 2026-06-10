@@ -1,3 +1,5 @@
+from datetime import date, datetime, time, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
@@ -22,10 +24,25 @@ def _get_user_item(db: Session, user_id: int, history_id: int) -> TranslationHis
 def list_history(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    start_date: date | None = Query(None, description="开始日期（含）"),
+    end_date: date | None = Query(None, description="结束日期（含）"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=400, detail="开始日期不能晚于结束日期")
+
     q = db.query(TranslationHistory).filter(TranslationHistory.user_id == current_user.id)
+    if start_date:
+        q = q.filter(
+            TranslationHistory.created_at
+            >= datetime.combine(start_date, time.min, tzinfo=timezone.utc)
+        )
+    if end_date:
+        q = q.filter(
+            TranslationHistory.created_at
+            <= datetime.combine(end_date, time.max, tzinfo=timezone.utc)
+        )
     total = q.with_entities(func.count(TranslationHistory.id)).scalar() or 0
     items = (
         q.order_by(desc(TranslationHistory.created_at))

@@ -25,9 +25,22 @@
     </div>
 
     <div id="board" class="board hidden">
-      <div class="toolbar">
+      <div class="toolbar toolbar-main">
         <input type="search" id="search-input" placeholder="搜索原文或译文…" />
         <span id="record-count" class="count"></span>
+      </div>
+      <div class="toolbar toolbar-date">
+        <label class="date-field">
+          开始
+          <input type="date" id="date-start" />
+        </label>
+        <span class="date-sep">至</span>
+        <label class="date-field">
+          结束
+          <input type="date" id="date-end" />
+        </label>
+        <button id="btn-filter-date" class="btn secondary">按时间查询</button>
+        <button id="btn-clear-date" class="btn secondary">清除时间</button>
       </div>
 
       <div class="table-wrap">
@@ -36,7 +49,12 @@
             <tr>
               <th class="col-time">时间</th>
               <th class="col-source">原文</th>
-              <th class="col-target">译文</th>
+              <th class="col-target">
+                <div class="th-target">
+                  <span>译文</span>
+                  <button type="button" id="toggle-all-visible" class="eye-btn" title="全部显示/隐藏译文"></button>
+                </div>
+              </th>
               <th class="col-actions">操作</th>
             </tr>
           </thead>

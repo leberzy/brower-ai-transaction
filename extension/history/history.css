@@ -70,12 +70,43 @@ body {
   border-bottom: 1px solid #f3f4f6;
 }
 
+.toolbar-main {
+  flex-wrap: wrap;
+}
+
+.toolbar-date {
+  flex-wrap: wrap;
+  background: #f9fafb;
+}
+
 .toolbar input[type="search"] {
   flex: 1;
+  min-width: 180px;
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 13px;
+}
+
+.toolbar input[type="date"] {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.date-sep {
+  font-size: 12px;
+  color: #9ca3af;
 }
 
 .toolbar input:focus {
@@ -118,9 +149,55 @@ th {
   width: 150px;
 }
 
+.col-target {
+  min-width: 200px;
+}
+
 .col-actions {
   width: 140px;
   white-space: nowrap;
+}
+
+.th-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.target-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.eye-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  color: #2563eb;
+  cursor: pointer;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+}
+
+.eye-btn:hover {
+  background: #dbeafe;
+}
+
+.eye-btn.is-off {
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.eye-btn.is-off:hover {
+  background: #e5e7eb;
 }
 
 .cell-text {
@@ -139,6 +216,13 @@ th {
 
 .cell-target {
   color: #1e40af;
+  flex: 1;
+}
+
+.cell-target.is-masked {
+  color: #9ca3af;
+  font-style: italic;
+  -webkit-line-clamp: 1;
 }
 
 .cell-time {

@@ -1,10 +1,18 @@
 const $ = (id) => document.getElementById(id);
 
 const PAGE_SIZE = 20;
+const EYE_OPEN =
+  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_CLOSED =
+  '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a20.77 20.77 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a20.75 20.75 0 0 1-3.16 4.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
 let allItems = [];
 let loadedTotal = 0;
 let serverTotal = 0;
 let viewingItem = null;
+let hiddenIds = new Set();
+let dateStart = "";
+let dateEnd = "";
 
 async function send(type, payload = {}) {
   return chrome.runtime.sendMessage({ type, ...payload });
@@ -36,12 +44,50 @@ function getFilteredItems() {
   );
 }
 
+function isHidden(id) {
+  return hiddenIds.has(id);
+}
+
+function eyeBtnHtml(visible, title) {
+  return `<button type="button" class="eye-btn${visible ? "" : " is-off"}" title="${title}">${visible ? EYE_OPEN : EYE_CLOSED}</button>`;
+}
+
+function updateHeaderEye() {
+  const filtered = getFilteredItems();
+  const btn = $("toggle-all-visible");
+  if (!btn || filtered.length === 0) {
+    if (btn) btn.innerHTML = EYE_OPEN;
+    return;
+  }
+  const allHidden = filtered.every((item) => isHidden(item.id));
+  btn.innerHTML = allHidden ? EYE_CLOSED : EYE_OPEN;
+  btn.classList.toggle("is-off", allHidden);
+  btn.title = allHidden ? "全部显示译文" : "全部隐藏译文";
+}
+
 function updateCount() {
   const filtered = getFilteredItems();
-  const label = $("search-input").value.trim()
-    ? `显示 ${filtered.length} / 共 ${allItems.length} 条`
-    : `共 ${serverTotal} 条记录`;
-  $("record-count").textContent = label;
+  const parts = [`共 ${serverTotal} 条记录`];
+  if (dateStart || dateEnd) {
+    parts.push(`时间：${dateStart || "…"} ~ ${dateEnd || "…"}`);
+  }
+  if ($("search-input").value.trim()) {
+    parts.push(`搜索匹配 ${filtered.length} 条`);
+  }
+  $("record-count").textContent = parts.join(" · ");
+}
+
+function renderTargetCell(item) {
+  const visible = !isHidden(item.id);
+  const textHtml = visible
+    ? `<div class="cell-text cell-target">${escapeHtml(item.translated_text)}</div>`
+    : `<div class="cell-text cell-target is-masked">译文已隐藏，点击眼睛显示</div>`;
+  return `
+    <div class="target-cell">
+      ${eyeBtnHtml(visible, visible ? "隐藏译文" : "显示译文")}
+      ${textHtml}
+    </div>
+  `;
 }
 
 function renderTable() {
@@ -51,7 +97,8 @@ function renderTable() {
 
   if (filtered.length === 0) {
     $("empty-tip").classList.remove("hidden");
-    $("empty-tip").textContent = $("search-input").value.trim()
+    const hasFilter = $("search-input").value.trim() || dateStart || dateEnd;
+    $("empty-tip").textContent = hasFilter
       ? "没有匹配的记录"
       : "暂无记录，点击「新建记录」添加";
   } else {
@@ -64,7 +111,7 @@ function renderTable() {
     tr.innerHTML = `
       <td class="cell-time">${formatTime(item.created_at)}</td>
       <td><div class="cell-text cell-source" title="${escapeHtml(item.source_text)}">${escapeHtml(item.source_text)}</div></td>
-      <td><div class="cell-text cell-target" title="${escapeHtml(item.translated_text)}">${escapeHtml(item.translated_text)}</div></td>
+      <td class="col-target-cell">${renderTargetCell(item)}</td>
       <td>
         <div class="row-actions">
           <button class="btn secondary sm" data-action="view">查看</button>
@@ -77,6 +124,7 @@ function renderTable() {
   });
 
   updateCount();
+  updateHeaderEye();
   const loadMore = $("btn-load-more");
   if (allItems.length < serverTotal && !$("search-input").value.trim()) {
     loadMore.classList.remove("hidden");
@@ -85,13 +133,42 @@ function renderTable() {
   }
 }
 
+function toggleRowVisibility(id) {
+  if (hiddenIds.has(id)) hiddenIds.delete(id);
+  else hiddenIds.add(id);
+  renderTable();
+}
+
+function toggleAllVisibility() {
+  const filtered = getFilteredItems();
+  if (filtered.length === 0) return;
+  const allHidden = filtered.every((item) => isHidden(item.id));
+  if (allHidden) {
+    filtered.forEach((item) => hiddenIds.delete(item.id));
+  } else {
+    filtered.forEach((item) => hiddenIds.add(item.id));
+  }
+  renderTable();
+}
+
+function getDateFilterParams() {
+  return {
+    start_date: dateStart || undefined,
+    end_date: dateEnd || undefined,
+  };
+}
+
 async function loadHistory(reset = false) {
   if (reset) {
     allItems = [];
     loadedTotal = 0;
   }
 
-  const resp = await send("GET_HISTORY", { skip: loadedTotal, limit: PAGE_SIZE });
+  const resp = await send("GET_HISTORY", {
+    skip: loadedTotal,
+    limit: PAGE_SIZE,
+    ...getDateFilterParams(),
+  });
   if (!resp?.ok) {
     alert(resp?.error || "加载失败");
     return;
@@ -101,6 +178,24 @@ async function loadHistory(reset = false) {
   loadedTotal = allItems.length;
   serverTotal = resp.total;
   renderTable();
+}
+
+function applyDateFilter() {
+  dateStart = $("date-start").value;
+  dateEnd = $("date-end").value;
+  if (dateStart && dateEnd && dateStart > dateEnd) {
+    alert("开始日期不能晚于结束日期");
+    return;
+  }
+  loadHistory(true);
+}
+
+function clearDateFilter() {
+  dateStart = "";
+  dateEnd = "";
+  $("date-start").value = "";
+  $("date-end").value = "";
+  loadHistory(true);
 }
 
 function openFormModal(mode, item = null) {
@@ -180,6 +275,7 @@ async function deleteRecord(id) {
   }
 
   closeViewModal();
+  hiddenIds.delete(id);
   allItems = allItems.filter((item) => item.id !== id);
   serverTotal = Math.max(0, serverTotal - 1);
   loadedTotal = allItems.length;
@@ -187,6 +283,8 @@ async function deleteRecord(id) {
 }
 
 async function init() {
+  $("toggle-all-visible").innerHTML = EYE_OPEN;
+
   const session = await send("GET_SESSION");
   if (!session.loggedIn) {
     $("login-prompt").classList.remove("hidden");
@@ -205,6 +303,9 @@ $("btn-refresh").addEventListener("click", () => loadHistory(true));
 $("btn-create").addEventListener("click", () => openFormModal("create"));
 $("btn-load-more").addEventListener("click", () => loadHistory(false));
 $("search-input").addEventListener("input", renderTable);
+$("btn-filter-date").addEventListener("click", applyDateFilter);
+$("btn-clear-date").addEventListener("click", clearDateFilter);
+$("toggle-all-visible").addEventListener("click", toggleAllVisibility);
 
 $("record-form").addEventListener("submit", saveRecord);
 $("btn-cancel").addEventListener("click", closeFormModal);
@@ -224,6 +325,13 @@ $("view-delete").addEventListener("click", () => {
 });
 
 $("history-tbody").addEventListener("click", (e) => {
+  const eyeBtn = e.target.closest(".eye-btn");
+  if (eyeBtn) {
+    const tr = eyeBtn.closest("tr");
+    if (tr) toggleRowVisibility(Number(tr.dataset.id));
+    return;
+  }
+
   const btn = e.target.closest("button[data-action]");
   if (!btn) return;
   const tr = btn.closest("tr");

@@ -101,9 +101,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         return { ok: true, result };
       }
       case "GET_HISTORY": {
-        const data = await apiRequest(
-          `/api/history?skip=${message.skip || 0}&limit=${message.limit || 20}`
-        );
+        const params = new URLSearchParams({
+          skip: String(message.skip || 0),
+          limit: String(message.limit || 20),
+        });
+        if (message.start_date) params.set("start_date", message.start_date);
+        if (message.end_date) params.set("end_date", message.end_date);
+        const data = await apiRequest(`/api/history?${params}`);
         return { ok: true, ...data };
       }
       case "GET_HISTORY_ITEM": {
