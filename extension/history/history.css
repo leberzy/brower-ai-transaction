@@ -62,6 +62,81 @@ body {
   overflow: hidden;
 }
 
+.board-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.tab-btn.is-active {
+  color: #2563eb;
+  background: #fff;
+  border-bottom-color: #2563eb;
+}
+
+.tab-btn.is-active[data-tab="pending"] {
+  color: #b45309;
+  border-bottom-color: #f59e0b;
+}
+
+.tab-count {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 6px;
+  margin-left: 4px;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  background: #e5e7eb;
+  color: #374151;
+  border-radius: 999px;
+}
+
+.tab-btn.is-active .tab-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.tab-btn.is-active[data-tab="pending"] .tab-count {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.pending-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+}
+
+.status-btn.is-on[data-status="pending"] {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+}
+
 .toolbar {
   display: flex;
   align-items: center;

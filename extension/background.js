@@ -109,6 +109,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (message.end_date) params.set("end_date", message.end_date);
         if (message.is_learned === true) params.set("is_learned", "true");
         if (message.is_favorited === true) params.set("is_favorited", "true");
+        if (message.is_pending === true) params.set("is_pending", "true");
         const data = await apiRequest(`/api/history?${params}`);
         return { ok: true, ...data };
       }
@@ -136,6 +137,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (message.target_lang !== undefined) body.target_lang = message.target_lang;
         if (message.is_learned !== undefined) body.is_learned = Boolean(message.is_learned);
         if (message.is_favorited !== undefined) body.is_favorited = Boolean(message.is_favorited);
+        if (message.is_pending !== undefined) body.is_pending = Boolean(message.is_pending);
         if (Object.keys(body).length === 0) {
           throw new Error("没有可更新的字段");
         }

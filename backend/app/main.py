@@ -31,6 +31,13 @@ def _migrate_sqlite_columns() -> None:
                     "ADD COLUMN is_favorited BOOLEAN NOT NULL DEFAULT 0"
                 )
             )
+        if "is_pending" not in cols:
+            conn.execute(
+                text(
+                    "ALTER TABLE translation_history "
+                    "ADD COLUMN is_pending BOOLEAN NOT NULL DEFAULT 0"
+                )
+            )
 
 
 @asynccontextmanager

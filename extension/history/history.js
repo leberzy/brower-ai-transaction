@@ -9,12 +9,14 @@ const EYE_CLOSED =
 let allItems = [];
 let loadedTotal = 0;
 let serverTotal = 0;
+let pendingTotal = 0;
 let viewingItem = null;
 let hiddenIds = new Set();
 let dateStart = "";
 let dateEnd = "";
 let filterLearned = false;
 let filterFavorited = false;
+let currentTab = "all";
 
 async function send(type, payload = {}) {
   return chrome.runtime.sendMessage({ type, ...payload });
@@ -34,6 +36,10 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function isPendingTab() {
+  return currentTab === "pending";
 }
 
 function getFilteredItems() {
@@ -69,25 +75,61 @@ function updateHeaderEye() {
 
 function updateCount() {
   const filtered = getFilteredItems();
-  const parts = [`共 ${serverTotal} 条记录`];
+  const parts = [isPendingTab() ? `待学 ${serverTotal} 条` : `共 ${serverTotal} 条记录`];
   if (dateStart || dateEnd) {
     parts.push(`时间：${dateStart || "…"} ~ ${dateEnd || "…"}`);
   }
   if ($("search-input").value.trim()) {
     parts.push(`搜索匹配 ${filtered.length} 条`);
   }
-  if (filterLearned) parts.push("已学会");
-  if (filterFavorited) parts.push("收藏");
+  if (!isPendingTab() && filterLearned) parts.push("已学会");
+  if (!isPendingTab() && filterFavorited) parts.push("收藏");
   $("record-count").textContent = parts.join(" · ");
+  $("pending-count").textContent = String(pendingTotal);
 }
 
 function renderStatusCell(item) {
   const learned = !!item.is_learned;
   const favorited = !!item.is_favorited;
+  const pending = !!item.is_pending;
+
+  if (isPendingTab()) {
+    return `
+      <div class="status-cell">
+        <button type="button" class="status-btn${learned ? " is-on" : ""}" data-action="toggle-learned" data-status="learned">${learned ? "✓ 已学会" : "未学会"}</button>
+      </div>
+    `;
+  }
+
   return `
     <div class="status-cell">
       <button type="button" class="status-btn${learned ? " is-on" : ""}" data-action="toggle-learned" data-status="learned">${learned ? "✓ 已学会" : "未学会"}</button>
       <button type="button" class="status-btn${favorited ? " is-on" : ""}" data-action="toggle-favorited" data-status="favorited">${favorited ? "★ 收藏" : "☆ 收藏"}</button>
+      ${pending ? '<span class="pending-badge">待学中</span>' : ""}
+    </div>
+  `;
+}
+
+function renderActionsCell(item) {
+  if (isPendingTab()) {
+    return `
+      <div class="row-actions">
+        <button class="btn primary sm" data-action="complete-pending">完成</button>
+        <button class="btn secondary sm" data-action="view">查看</button>
+      </div>
+    `;
+  }
+
+  const pendingBtn = item.is_pending
+    ? ""
+    : `<button class="btn secondary sm" data-action="mark-pending">待学</button>`;
+
+  return `
+    <div class="row-actions">
+      ${pendingBtn}
+      <button class="btn secondary sm" data-action="view">查看</button>
+      <button class="btn secondary sm" data-action="edit">编辑</button>
+      <button class="btn danger sm" data-action="delete">删除</button>
     </div>
   `;
 }
@@ -118,10 +160,17 @@ function renderTable() {
   if (filtered.length === 0) {
     $("empty-tip").classList.remove("hidden");
     const hasFilter =
-      $("search-input").value.trim() || dateStart || dateEnd || filterLearned || filterFavorited;
-    $("empty-tip").textContent = hasFilter
-      ? "没有匹配的记录"
-      : "暂无记录，点击「新建记录」添加";
+      $("search-input").value.trim() ||
+      dateStart ||
+      dateEnd ||
+      (!isPendingTab() && (filterLearned || filterFavorited));
+    $("empty-tip").textContent = isPendingTab()
+      ? hasFilter
+        ? "没有匹配的待学记录"
+        : "暂无待学记录，在「全部记录」中点击「待学」添加"
+      : hasFilter
+        ? "没有匹配的记录"
+        : "暂无记录，点击「新建记录」添加";
   } else {
     $("empty-tip").classList.add("hidden");
   }
@@ -134,13 +183,7 @@ function renderTable() {
       <td><div class="cell-text cell-source" title="${escapeHtml(item.source_text)}">${escapeHtml(item.source_text)}</div></td>
       <td class="col-target-cell">${renderTargetCell(item)}</td>
       <td>${renderStatusCell(item)}</td>
-      <td>
-        <div class="row-actions">
-          <button class="btn secondary sm" data-action="view">查看</button>
-          <button class="btn secondary sm" data-action="edit">编辑</button>
-          <button class="btn danger sm" data-action="delete">删除</button>
-        </div>
-      </td>
+      <td>${renderActionsCell(item)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -153,6 +196,10 @@ function renderTable() {
   } else {
     loadMore.classList.add("hidden");
   }
+}
+
+function hideAllTranslations() {
+  getFilteredItems().forEach((item) => hiddenIds.add(item.id));
 }
 
 function toggleRowVisibility(id) {
@@ -174,12 +221,22 @@ function toggleAllVisibility() {
 }
 
 function getListFilterParams() {
-  return {
+  const params = {
     start_date: dateStart || undefined,
     end_date: dateEnd || undefined,
-    is_learned: filterLearned ? true : undefined,
-    is_favorited: filterFavorited ? true : undefined,
   };
+  if (isPendingTab()) {
+    params.is_pending = true;
+  } else {
+    if (filterLearned) params.is_learned = true;
+    if (filterFavorited) params.is_favorited = true;
+  }
+  return params;
+}
+
+async function refreshPendingCount() {
+  const resp = await send("GET_HISTORY", { skip: 0, limit: 1, is_pending: true });
+  if (resp?.ok) pendingTotal = resp.total;
 }
 
 async function loadHistory(reset = false) {
@@ -201,26 +258,68 @@ async function loadHistory(reset = false) {
   allItems = reset ? resp.items : [...allItems, ...resp.items];
   loadedTotal = allItems.length;
   serverTotal = resp.total;
+  await refreshPendingCount();
   updateFilterChips();
   renderTable();
+}
+
+async function updateItemStatus(id, fields) {
+  const item = allItems.find((i) => i.id === id);
+  if (!item) return false;
+
+  const resp = await send("UPDATE_HISTORY", { id, ...fields });
+  if (!resp?.ok) {
+    alert(resp?.error || "更新状态失败");
+    return false;
+  }
+
+  Object.assign(item, resp.item);
+  if (viewingItem?.id === id) viewingItem = { ...item };
+  await refreshPendingCount();
+
+  if (isPendingTab() && fields.is_pending === false) {
+    allItems = allItems.filter((i) => i.id !== id);
+    loadedTotal = allItems.length;
+    serverTotal = Math.max(0, serverTotal - 1);
+    hiddenIds.delete(id);
+    renderTable();
+    return true;
+  }
+
+  renderTable();
+  return true;
 }
 
 async function toggleItemStatus(id, field) {
   const item = allItems.find((i) => i.id === id);
   if (!item) return;
+  await updateItemStatus(id, { [field]: !item[field] });
+}
 
-  const resp = await send("UPDATE_HISTORY", {
-    id,
-    [field]: !item[field],
+async function markPending(id) {
+  await updateItemStatus(id, { is_pending: true });
+}
+
+async function completePending(id) {
+  await updateItemStatus(id, { is_pending: false });
+}
+
+function switchTab(tab) {
+  if (currentTab === tab) return;
+  currentTab = tab;
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.tab === tab);
   });
-  if (!resp?.ok) {
-    alert(resp?.error || "更新状态失败");
-    return;
+  $("toolbar-status").classList.toggle("hidden", isPendingTab());
+  hiddenIds.clear();
+  if (isPendingTab()) {
+    filterLearned = false;
+    filterFavorited = false;
+    updateFilterChips();
   }
-
-  Object.assign(item, resp.item);
-  if (viewingItem?.id === id) viewingItem = { ...item };
-  renderTable();
+  loadHistory(true).then(() => {
+    if (isPendingTab()) hideAllTranslations();
+  });
 }
 
 function toggleStatusFilter(type) {
@@ -271,6 +370,7 @@ function closeFormModal() {
 function openViewModal(item) {
   viewingItem = item;
   const tags = [];
+  if (item.is_pending) tags.push("待学");
   if (item.is_learned) tags.push("已学会");
   if (item.is_favorited) tags.push("收藏");
   const tagText = tags.length ? ` · ${tags.join(" / ")}` : "";
@@ -338,6 +438,7 @@ async function deleteRecord(id) {
   allItems = allItems.filter((item) => item.id !== id);
   serverTotal = Math.max(0, serverTotal - 1);
   loadedTotal = allItems.length;
+  await refreshPendingCount();
   renderTable();
 }
 
@@ -357,6 +458,10 @@ async function init() {
   $("board").classList.remove("hidden");
   await loadHistory(true);
 }
+
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
 
 $("btn-refresh").addEventListener("click", () => loadHistory(true));
 $("btn-create").addEventListener("click", () => openFormModal("create"));
@@ -407,6 +512,8 @@ $("history-tbody").addEventListener("click", (e) => {
   else if (action === "delete") deleteRecord(id);
   else if (action === "toggle-learned") toggleItemStatus(id, "is_learned");
   else if (action === "toggle-favorited") toggleItemStatus(id, "is_favorited");
+  else if (action === "mark-pending") markPending(id);
+  else if (action === "complete-pending") completePending(id);
 });
 
 $("btn-go-login").addEventListener("click", () => {

@@ -32,6 +32,7 @@ class TranslationHistory(Base):
     target_lang: Mapped[str] = mapped_column(String(16), default="zh")
     is_learned: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_favorited: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_pending: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     user: Mapped["User"] = relationship(back_populates="translations")
