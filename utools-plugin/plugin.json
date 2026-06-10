@@ -1,0 +1,27 @@
+{
+  "main": "index.html",
+  "logo": "logo.png",
+  "preload": "preload.js",
+  "pluginSetting": {
+    "height": 560
+  },
+  "features": [
+    {
+      "code": "translate-ui",
+      "explain": "AI 英译中翻译，支持登录与翻译历史",
+      "cmds": ["AI翻译", "英译中"]
+    },
+    {
+      "code": "translate-over",
+      "explain": "把选中的英文文本翻译成中文",
+      "cmds": [
+        {
+          "type": "over",
+          "label": "AI 英译中",
+          "minLength": 1,
+          "maxLength": 5000
+        }
+      ]
+    }
+  ]
+}

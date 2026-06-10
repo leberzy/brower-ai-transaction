@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 英译中</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+
+    <div id="login-view" class="view hidden">
+      <h1>登录 AI 翻译</h1>
+      <div class="card">
+        <label>用户名<input type="text" id="username" autocomplete="username" /></label>
+        <label>密码<input type="password" id="password" autocomplete="current-password" /></label>
+        <div class="btn-row">
+          <button id="btn-login" class="btn primary">登录</button>
+          <button id="btn-register" class="btn secondary">注册</button>
+        </div>
+        <p id="auth-error" class="error hidden"></p>
+      </div>
+      <div class="card">
+        <label>API 地址<input type="text" id="api-base" placeholder="http://localhost:8000" /></label>
+        <button id="btn-save-api" class="btn secondary">保存</button>
+      </div>
+    </div>
+
+    <div id="main-view" class="view hidden">
+      <div class="topline">
+        <span>已登录：<strong id="display-username"></strong></span>
+        <button id="btn-logout" class="btn link">退出</button>
+      </div>
+
+      <div class="card">
+        <textarea id="source-input" rows="4" placeholder="输入或粘贴英文，Ctrl+Enter 翻译"></textarea>
+        <div class="btn-row">
+          <button id="btn-translate" class="btn primary">翻译</button>
+          <button id="btn-copy" class="btn secondary hidden">复制译文</button>
+        </div>
+        <div id="result-box" class="result hidden"></div>
+        <p id="translate-error" class="error hidden"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>最近翻译</h2>
+          <button id="btn-refresh-history" class="btn link">刷新</button>
+        </div>
+        <div id="history-list"></div>
+      </div>
+    </div>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
