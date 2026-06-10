@@ -270,7 +270,11 @@ function closeFormModal() {
 
 function openViewModal(item) {
   viewingItem = item;
-  $("view-meta").textContent = `ID: ${item.id} · ${formatTime(item.created_at)}`;
+  const tags = [];
+  if (item.is_learned) tags.push("已学会");
+  if (item.is_favorited) tags.push("收藏");
+  const tagText = tags.length ? ` · ${tags.join(" / ")}` : "";
+  $("view-meta").textContent = `ID: ${item.id} · ${formatTime(item.created_at)}${tagText}`;
   $("view-source").textContent = item.source_text;
   $("view-target").textContent = item.translated_text;
   $("view-modal").classList.remove("hidden");
@@ -401,6 +405,8 @@ $("history-tbody").addEventListener("click", (e) => {
   if (action === "view") openViewModal(item);
   else if (action === "edit") openFormModal("edit", item);
   else if (action === "delete") deleteRecord(id);
+  else if (action === "toggle-learned") toggleItemStatus(id, "is_learned");
+  else if (action === "toggle-favorited") toggleItemStatus(id, "is_favorited");
 });
 
 $("btn-go-login").addEventListener("click", () => {

@@ -134,8 +134,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (message.translated_text !== undefined) body.translated_text = message.translated_text;
         if (message.source_lang !== undefined) body.source_lang = message.source_lang;
         if (message.target_lang !== undefined) body.target_lang = message.target_lang;
-        if (message.is_learned !== undefined) body.is_learned = message.is_learned;
-        if (message.is_favorited !== undefined) body.is_favorited = message.is_favorited;
+        if (message.is_learned !== undefined) body.is_learned = Boolean(message.is_learned);
+        if (message.is_favorited !== undefined) body.is_favorited = Boolean(message.is_favorited);
+        if (Object.keys(body).length === 0) {
+          throw new Error("没有可更新的字段");
+        }
         const item = await apiRequest(`/api/history/${message.id}`, {
           method: "PUT",
           body: JSON.stringify(body),
