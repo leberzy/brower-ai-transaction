@@ -1,3 +1,16 @@
+const ICON = {
+  view:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  edit:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  trash:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>',
+  clock:
+    '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  check:
+    '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+};
+
 const $ = (id) => document.getElementById(id);
 
 const PAGE_SIZE = 20;
@@ -124,22 +137,22 @@ function renderActionsCell(item) {
   if (isPendingTab()) {
     return `
       <div class="row-actions">
-        <button class="btn primary sm" data-action="complete-pending">完成</button>
-        <button class="btn secondary sm" data-action="view">查看</button>
+        <button class="btn primary sm" data-action="complete-pending" title="标记为已学会">${ICON.check}<span>完成</span></button>
+        <button class="icon-action" data-action="view" title="查看详情">${ICON.view}</button>
       </div>
     `;
   }
 
   const pendingBtn = item.is_pending
     ? ""
-    : `<button class="btn secondary sm" data-action="mark-pending">待学</button>`;
+    : `<button class="icon-action is-warn" data-action="mark-pending" title="加入待学">${ICON.clock}</button>`;
 
   return `
     <div class="row-actions">
       ${pendingBtn}
-      <button class="btn secondary sm" data-action="view">查看</button>
-      <button class="btn secondary sm" data-action="edit">编辑</button>
-      <button class="btn danger sm" data-action="delete">删除</button>
+      <button class="icon-action" data-action="view" title="查看详情">${ICON.view}</button>
+      <button class="icon-action" data-action="edit" title="编辑">${ICON.edit}</button>
+      <button class="icon-action is-danger" data-action="delete" title="删除">${ICON.trash}</button>
     </div>
   `;
 }
@@ -174,7 +187,7 @@ function renderTable() {
       dateStart ||
       dateEnd ||
       (!isPendingTab() && (filterLearned || filterFavorited));
-    $("empty-tip").textContent = isPendingTab()
+    $("empty-tip-text").textContent = isPendingTab()
       ? hasFilter
         ? "没有匹配的待学记录"
         : "暂无待学记录，在「全部记录」中点击「待学」添加"

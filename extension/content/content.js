@@ -10,6 +10,23 @@
     de: "德",
     es: "西",
   };
+  const LANG_FULL = {
+    zh: "中文",
+    en: "英文",
+    ja: "日文",
+    ko: "韩文",
+    fr: "法文",
+    de: "德文",
+    es: "西班牙文",
+  };
+
+  const ICON = {
+    translate: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h7M5 4h12M9 4v6c0 4-2 6-4 6"/><path d="M11 16l4-8 4 8M12.5 13h5"/></svg>',
+    close: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    check: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+    retry: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.5-7.1"/><polyline points="21 3 21 9 15 9"/></svg>',
+  };
 
   let toolbar = null;
   let panel = null;
@@ -17,7 +34,6 @@
   let hideTimer = null;
   let cachedTargetLang = "zh";
 
-  // 启动后异步刷新一次目标语言
   chrome.runtime
     .sendMessage({ type: "GET_TARGET_LANG" })
     .then((r) => {
@@ -25,7 +41,6 @@
     })
     .catch(() => {});
 
-  // 监听 storage 变化，实时同步目标语言
   chrome.storage?.onChanged?.addListener((changes, area) => {
     if (area === "local" && changes.targetLang) {
       cachedTargetLang = changes.targetLang.newValue || "zh";
@@ -34,6 +49,10 @@
 
   function langLabel(code) {
     return LANG_LABEL[code] || code.toUpperCase();
+  }
+
+  function langFull(code) {
+    return LANG_FULL[code] || code.toUpperCase();
   }
 
   function removeUI() {
@@ -88,12 +107,10 @@
 
     const btn = document.createElement("button");
     btn.className = "at-translate-btn";
-    btn.title = `翻译为${langLabel(cachedTargetLang)}文`;
+    btn.title = `翻译为${langFull(cachedTargetLang)}`;
     btn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-        <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-      </svg>
-      <span class="at-tag">译→${langLabel(cachedTargetLang)}</span>
+      ${ICON.translate}
+      <span class="at-tag">译为${langLabel(cachedTargetLang)}文</span>
     `;
     btn.addEventListener("mousedown", (e) => e.preventDefault());
     btn.addEventListener("click", () => {
@@ -110,7 +127,6 @@
       await navigator.clipboard.writeText(text);
       return true;
     } catch {
-      // 兼容兜底
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.position = "fixed";
@@ -129,19 +145,32 @@
 
     el.innerHTML = `
       <div class="at-header">
-        <span class="at-title">AI 翻译 · 译为${langLabel(cachedTargetLang)}文</span>
-        <button class="at-close" type="button" title="关闭">×</button>
-      </div>
-      <div class="at-label">原文</div>
-      <div class="at-source"></div>
-      <div class="at-label at-label-target">
-        <span>译文</span>
-        <div class="at-actions">
-          <button class="at-action at-copy" type="button" title="复制译文" disabled>复制</button>
-          <button class="at-action at-retry" type="button" title="重新翻译">重译</button>
+        <div class="at-brand">
+          <span class="at-brand-dot"></span>
+          <span class="at-title">AI 翻译</span>
+          <span class="at-pill">${langLabel(cachedTargetLang)}文</span>
         </div>
+        <button class="at-close" type="button" title="关闭 (Esc)" aria-label="关闭">${ICON.close}</button>
       </div>
-      <div class="at-result-wrap"></div>
+      <div class="at-section at-section-source">
+        <div class="at-label">原文</div>
+        <div class="at-source"></div>
+      </div>
+      <div class="at-divider"></div>
+      <div class="at-section at-section-target">
+        <div class="at-label-row">
+          <div class="at-label">译文</div>
+          <div class="at-actions">
+            <button class="at-action at-copy" type="button" title="复制译文" disabled>
+              ${ICON.copy}<span>复制</span>
+            </button>
+            <button class="at-action at-retry" type="button" title="重新翻译">
+              ${ICON.retry}<span>重译</span>
+            </button>
+          </div>
+        </div>
+        <div class="at-result-wrap"></div>
+      </div>
     `;
     el.querySelector(".at-source").textContent = source;
     el.querySelector(".at-close").addEventListener("click", () => {
@@ -165,12 +194,17 @@
       wrap.innerHTML = `
         <div class="at-loading">
           <span class="at-spinner"></span>
-          <span>正在调用 AI 翻译…</span>
+          <span>AI 正在翻译…</span>
         </div>
       `;
       copyBtn.disabled = true;
+      copyBtn.querySelector("span").textContent = "复制";
     } else if (state === "error") {
-      wrap.innerHTML = `<div class="at-error">${escapeHtml(payload.message)}</div>`;
+      wrap.innerHTML = `
+        <div class="at-error">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>${escapeHtml(payload.message)}</span>
+        </div>`;
       copyBtn.disabled = true;
     } else if (state === "result") {
       const div = document.createElement("div");
@@ -178,12 +212,18 @@
       div.textContent = payload.text;
       wrap.appendChild(div);
       copyBtn.disabled = false;
-      copyBtn.textContent = "复制";
+      const labelEl = copyBtn.querySelector("span");
+      labelEl.textContent = "复制";
       copyBtn.onclick = async () => {
         const ok = await copyToClipboard(payload.text);
-        copyBtn.textContent = ok ? "已复制" : "复制失败";
+        copyBtn.innerHTML = ok
+          ? `${ICON.check}<span>已复制</span>`
+          : `${ICON.copy}<span>失败</span>`;
+        copyBtn.classList.toggle("is-done", ok);
         setTimeout(() => {
-          if (copyBtn) copyBtn.textContent = "复制";
+          if (!copyBtn) return;
+          copyBtn.innerHTML = `${ICON.copy}<span>复制</span>`;
+          copyBtn.classList.remove("is-done");
         }, 1500);
       };
     }
