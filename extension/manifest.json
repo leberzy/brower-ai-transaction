@@ -3,11 +3,8 @@
   "name": "AI 划词翻译",
   "version": "1.0.0",
   "description": "选中网页文本，一键 AI 翻译，并保存翻译历史",
-  "permissions": ["storage", "activeTab", "contextMenus", "tabs"],
-  "host_permissions": [
-    "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*"
-  ],
+  "permissions": ["storage", "activeTab", "contextMenus", "tabs", "clipboardWrite"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

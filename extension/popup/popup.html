@@ -8,38 +8,69 @@
 </head>
 <body>
   <div class="container">
-    <h1>AI 划词翻译</h1>
+    <header class="brand">
+      <div class="brand-icon">译</div>
+      <div>
+        <h1>AI 划词翻译</h1>
+        <p class="brand-sub">选中文本即可一键翻译</p>
+      </div>
+    </header>
 
     <div id="auth-section">
       <div id="login-form" class="card">
-        <h2>登录</h2>
-        <label>用户名<input type="text" id="username" autocomplete="username" /></label>
-        <label>密码<input type="password" id="password" autocomplete="current-password" /></label>
+        <h2>账号</h2>
+        <label>用户名
+          <input type="text" id="username" autocomplete="username" placeholder="3 ~ 64 位" />
+        </label>
+        <label>密码
+          <input type="password" id="password" autocomplete="current-password" placeholder="至少 6 位" />
+        </label>
+        <p id="auth-error" class="error hidden"></p>
         <div class="btn-row">
-          <button id="btn-login" class="btn primary">登录</button>
+          <button id="btn-login" class="btn primary full">登录</button>
           <button id="btn-register" class="btn secondary">注册</button>
         </div>
-        <p id="auth-error" class="error hidden"></p>
       </div>
 
       <div id="user-panel" class="card hidden">
-        <p>已登录：<strong id="display-username"></strong></p>
-        <button id="btn-logout" class="btn secondary">退出登录</button>
+        <div class="user-info">
+          <div class="avatar" id="user-avatar"></div>
+          <div>
+            <div class="user-label">已登录</div>
+            <div class="user-name" id="display-username"></div>
+          </div>
+          <button id="btn-logout" class="btn ghost sm" title="退出登录">退出</button>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>设置</h2>
-      <label>API 地址<input type="text" id="api-base" placeholder="http://localhost:8000" /></label>
-      <button id="btn-save-api" class="btn secondary">保存</button>
+      <h2>翻译设置</h2>
+      <label>目标语言
+        <select id="target-lang">
+          <option value="zh">中文</option>
+          <option value="en">英文</option>
+          <option value="ja">日文</option>
+          <option value="ko">韩文</option>
+          <option value="fr">法文</option>
+          <option value="de">德文</option>
+          <option value="es">西班牙文</option>
+        </select>
+      </label>
+      <label>API 地址
+        <input type="text" id="api-base" placeholder="http://localhost:8000" />
+      </label>
+      <button id="btn-save-api" class="btn secondary full">保存设置</button>
     </div>
 
     <div id="history-section" class="card hidden">
       <h2>翻译历史</h2>
-      <p class="hint">在独立看板中管理所有翻译记录，支持增删改查。</p>
-      <button id="btn-open-history" class="btn primary full-width">打开历史看板</button>
+      <p class="hint">在独立看板中管理所有翻译记录，支持搜索 / 标记 / 编辑。</p>
+      <button id="btn-open-history" class="btn primary full">打开历史看板</button>
     </div>
   </div>
+
+  <div id="toast" class="toast hidden"></div>
   <script src="popup.js"></script>
 </body>
 </html>

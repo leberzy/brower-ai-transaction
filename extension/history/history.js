@@ -22,6 +22,16 @@ async function send(type, payload = {}) {
   return chrome.runtime.sendMessage({ type, ...payload });
 }
 
+let toastTimer = null;
+function toast(msg, type = "") {
+  const el = $("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "toast" + (type ? ` ${type}` : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add("hidden"), 1800);
+}
+
 function formatTime(iso) {
   try {
     return new Date(iso).toLocaleString("zh-CN");
@@ -251,7 +261,7 @@ async function loadHistory(reset = false) {
     ...getListFilterParams(),
   });
   if (!resp?.ok) {
-    alert(resp?.error || "加载失败");
+    toast(resp?.error || "加载失败", "error");
     return;
   }
 
@@ -269,7 +279,7 @@ async function updateItemStatus(id, fields) {
 
   const resp = await send("UPDATE_HISTORY", { id, ...fields });
   if (!resp?.ok) {
-    alert(resp?.error || "更新状态失败");
+    toast(resp?.error || "更新状态失败", "error");
     return false;
   }
 
@@ -338,7 +348,7 @@ function applyDateFilter() {
   dateStart = $("date-start").value;
   dateEnd = $("date-end").value;
   if (dateStart && dateEnd && dateStart > dateEnd) {
-    alert("开始日期不能晚于结束日期");
+    toast("开始日期不能晚于结束日期", "error");
     return;
   }
   loadHistory(true);
@@ -422,6 +432,7 @@ async function saveRecord(e) {
 
   closeFormModal();
   await loadHistory(true);
+  toast(id ? "记录已更新" : "记录已创建", "success");
 }
 
 async function deleteRecord(id) {
@@ -429,7 +440,7 @@ async function deleteRecord(id) {
 
   const resp = await send("DELETE_HISTORY", { id });
   if (!resp?.ok) {
-    alert(resp?.error || "删除失败");
+    toast(resp?.error || "删除失败", "error");
     return;
   }
 
@@ -440,6 +451,7 @@ async function deleteRecord(id) {
   loadedTotal = allItems.length;
   await refreshPendingCount();
   renderTable();
+  toast("记录已删除", "success");
 }
 
 async function init() {
@@ -517,7 +529,32 @@ $("history-tbody").addEventListener("click", (e) => {
 });
 
 $("btn-go-login").addEventListener("click", () => {
-  alert("请点击浏览器工具栏中的扩展图标进行登录");
+  toast("请点击浏览器工具栏中的扩展图标进行登录");
+});
+
+document.addEventListener("keydown", (e) => {
+  const formOpen = !$("modal").classList.contains("hidden");
+  const viewOpen = !$("view-modal").classList.contains("hidden");
+
+  if (e.key === "Escape") {
+    if (formOpen) {
+      closeFormModal();
+      e.preventDefault();
+    } else if (viewOpen) {
+      closeViewModal();
+      e.preventDefault();
+    }
+    return;
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    if (formOpen) {
+      e.preventDefault();
+      $("record-form").requestSubmit
+        ? $("record-form").requestSubmit()
+        : $("record-form").dispatchEvent(new Event("submit", { cancelable: true }));
+    }
+  }
 });
 
 init();
