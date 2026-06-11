@@ -4,6 +4,7 @@ const CONTEXT_MENU_ID = "ai-translate-selection";
 
 function setupContextMenu() {
   chrome.contextMenus.removeAll(() => {
+    if (chrome.runtime.lastError) return;
     chrome.contextMenus.create({
       id: CONTEXT_MENU_ID,
       title: "AI 翻译选中文本",
@@ -187,8 +188,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   Promise.resolve(handler(message))
-    .then(sendResponse)
-    .catch((err) => sendResponse({ ok: false, error: err.message }));
+    .then((result) => {
+      try { sendResponse(result); } catch { /* 连接已关闭 */ }
+    })
+    .catch((err) => {
+      try { sendResponse({ ok: false, error: err.message }); } catch { /* 连接已关闭 */ }
+    });
   return true;
 });
 
@@ -200,5 +205,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     type: "RUN_TRANSLATE",
     text,
     anchor: info.x != null && info.y != null ? { x: info.x, y: info.y } : null,
+  }).catch(() => {
+    // 目标页面没有 content script（如 chrome:// 页面），静默忽略
   });
 });

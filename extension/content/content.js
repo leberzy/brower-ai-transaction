@@ -21,7 +21,7 @@
   };
 
   const ICON = {
-    translate: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h7M5 4h12M9 4v6c0 4-2 6-4 6"/><path d="M11 16l4-8 4 8M12.5 13h5"/></svg>',
+    translate: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H8l-3 3v-3H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M15 3h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2v2.5L16.5 10H15a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M7 15l1.5 2M10.5 15L9 17"/></svg>',
     close: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     copy: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -110,7 +110,7 @@
     btn.title = `翻译为${langFull(cachedTargetLang)}`;
     btn.innerHTML = `
       ${ICON.translate}
-      <span class="at-tag">译为${langLabel(cachedTargetLang)}文</span>
+<!--      <span class="at-tag">译为${langLabel(cachedTargetLang)}文</span>-->
     `;
     btn.addEventListener("mousedown", (e) => e.preventDefault());
     btn.addEventListener("click", () => {
