@@ -76,6 +76,7 @@ def create_history(
         target_lang=body.target_lang,
         is_learned=body.is_learned,
         is_favorited=body.is_favorited,
+        is_pending=body.is_pending,
     )
     db.add(record)
     db.commit()

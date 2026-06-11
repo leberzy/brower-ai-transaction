@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     secret_key: str = "dev-secret-key-change-me"
-    database_url: str = "sqlite:///./translate.db"
+    database_url: str = "postgresql+psycopg://postgres:123456@115.190.0.115:5432/ai_translate"
     llm_api_base: str = "https://api.openai.com/v1"
     llm_api_key: str = ""
     llm_model: str = "gpt-4o-mini"

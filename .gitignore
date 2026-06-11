@@ -21,6 +21,9 @@ htmlcov/
 .tox/
 .nox/
 
+# --- uv ---
+uv.lock
+
 # --- 环境变量与密钥（保留 .env.example）---
 .env
 .env.local
