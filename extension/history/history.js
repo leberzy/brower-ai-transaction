@@ -9,6 +9,10 @@ const ICON = {
     '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
   check:
     '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+  book:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  spinner:
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="vi-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor"/></svg>',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -390,6 +394,10 @@ function closeFormModal() {
   $("record-form").reset();
 }
 
+function isSingleWord(text) {
+  return text.trim().split(/\s+/).length === 1;
+}
+
 function openViewModal(item) {
   viewingItem = item;
   const tags = [];
@@ -400,12 +408,90 @@ function openViewModal(item) {
   $("view-meta").textContent = `ID: ${item.id} · ${formatTime(item.created_at)}${tagText}`;
   $("view-source").textContent = item.source_text;
   $("view-target").textContent = item.translated_text;
+
+  // 例句区域：仅单词时显示
+  const exSection = $("view-examples-section");
+  if (isSingleWord(item.source_text)) {
+    exSection.classList.remove("hidden");
+    // 每次打开弹窗时重置为初始状态
+    setViewExamplesState("idle");
+  } else {
+    exSection.classList.add("hidden");
+  }
+
   $("view-modal").classList.remove("hidden");
 }
 
 function closeViewModal() {
   viewingItem = null;
   $("view-modal").classList.add("hidden");
+}
+
+function setViewExamplesState(state, payload) {
+  const wrap = $("view-examples-wrap");
+  const btn = $("view-examples-btn");
+  if (!wrap || !btn) return;
+
+  wrap.innerHTML = "";
+
+  if (state === "idle") {
+    btn.disabled = false;
+    btn.innerHTML = `${ICON.book}<span>生成例句</span>`;
+  } else if (state === "loading") {
+    btn.disabled = true;
+    btn.innerHTML = `${ICON.spinner}<span>生成中…</span>`;
+    wrap.innerHTML = `
+      <div class="vi-loading">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="vi-spin"><circle cx="12" cy="12" r="10" stroke-opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+        <span>AI 正在生成例句…</span>
+      </div>`;
+  } else if (state === "result") {
+    btn.disabled = false;
+    btn.innerHTML = `${ICON.book}<span>重新生成</span>`;
+    if (!payload.examples?.length) {
+      wrap.innerHTML = `<div class="vi-examples-empty">暂无例句</div>`;
+      return;
+    }
+    const ol = document.createElement("ol");
+    ol.className = "vi-examples-list";
+    payload.examples.forEach((ex) => {
+      const li = document.createElement("li");
+      li.className = "vi-example-item";
+      li.innerHTML = `
+        <div class="vi-example-en">${escapeHtml(ex.sentence)}</div>
+        <div class="vi-example-zh">${escapeHtml(ex.translation)}</div>
+      `;
+      ol.appendChild(li);
+    });
+    wrap.appendChild(ol);
+  } else if (state === "error") {
+    btn.disabled = false;
+    btn.innerHTML = `${ICON.book}<span>重试</span>`;
+    wrap.innerHTML = `
+      <div class="vi-examples-error">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>${escapeHtml(payload.message)}</span>
+      </div>`;
+  }
+}
+
+async function doViewExamples() {
+  if (!viewingItem) return;
+  setViewExamplesState("loading");
+  try {
+    const resp = await send("GET_EXAMPLES", {
+      word: viewingItem.source_text.trim(),
+      targetLang: viewingItem.target_lang || "zh",
+      count: 3,
+    });
+    if (!resp?.ok) {
+      setViewExamplesState("error", { message: resp?.error || "获取例句失败" });
+      return;
+    }
+    setViewExamplesState("result", { examples: resp.examples });
+  } catch (err) {
+    setViewExamplesState("error", { message: err.message || "网络错误" });
+  }
 }
 
 async function saveRecord(e) {
@@ -506,6 +592,7 @@ $("modal").querySelector(".modal-backdrop").addEventListener("click", closeFormM
 
 $("view-close").addEventListener("click", closeViewModal);
 $("view-modal").querySelector(".modal-backdrop").addEventListener("click", closeViewModal);
+$("view-examples-btn").addEventListener("click", doViewExamples);
 $("view-edit").addEventListener("click", () => {
   if (!viewingItem) return;
   const item = viewingItem;

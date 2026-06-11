@@ -26,6 +26,8 @@
     copy: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
     retry: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.5-7.1"/><polyline points="21 3 21 9 15 9"/></svg>',
+    book: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    sound: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
   };
 
   let toolbar = null;
@@ -53,6 +55,10 @@
 
   function langFull(code) {
     return LANG_FULL[code] || code.toUpperCase();
+  }
+
+  function isSingleWord(text) {
+    return text.trim().split(/\s+/).length === 1;
   }
 
   function removeUI() {
@@ -142,6 +148,7 @@
   function buildPanel(source, anchor) {
     const el = document.createElement("div");
     el.id = "ai-translate-panel";
+    const isWord = isSingleWord(source);
 
     el.innerHTML = `
       <div class="at-header">
@@ -167,11 +174,21 @@
             <button class="at-action at-retry" type="button" title="重新翻译">
               ${ICON.retry}<span>重译</span>
             </button>
+            ${isWord ? `<button class="at-action at-examples-btn" type="button" title="查看例句" disabled>${ICON.book}<span>例句</span></button>` : ""}
           </div>
         </div>
         <div class="at-result-wrap"></div>
       </div>
+      ${isWord ? `
+      <div class="at-divider at-divider-examples hidden"></div>
+      <div class="at-section at-section-examples hidden">
+        <div class="at-label-row">
+          <div class="at-label">例句</div>
+        </div>
+        <div class="at-examples-wrap"></div>
+      </div>` : ""}
     `;
+
     el.querySelector(".at-source").textContent = source;
     el.querySelector(".at-close").addEventListener("click", () => {
       panel?.remove();
@@ -180,6 +197,13 @@
     el.querySelector(".at-retry").addEventListener("click", () => {
       doTranslate(source, anchor);
     });
+
+    if (isWord) {
+      el.querySelector(".at-examples-btn").addEventListener("click", () => {
+        doExamples(source);
+      });
+    }
+
     document.documentElement.appendChild(el);
     return el;
   }
@@ -188,6 +212,7 @@
     if (!panel) return;
     const wrap = panel.querySelector(".at-result-wrap");
     const copyBtn = panel.querySelector(".at-copy");
+    const examplesBtn = panel.querySelector(".at-examples-btn");
     wrap.innerHTML = "";
 
     if (state === "loading") {
@@ -199,6 +224,7 @@
       `;
       copyBtn.disabled = true;
       copyBtn.querySelector("span").textContent = "复制";
+      if (examplesBtn) examplesBtn.disabled = true;
     } else if (state === "error") {
       wrap.innerHTML = `
         <div class="at-error">
@@ -206,7 +232,20 @@
           <span>${escapeHtml(payload.message)}</span>
         </div>`;
       copyBtn.disabled = true;
+      if (examplesBtn) examplesBtn.disabled = true;
     } else if (state === "result") {
+      // 读音/词性（单词时）
+      if (payload.phonetic || payload.pos) {
+        const phoneticEl = document.createElement("div");
+        phoneticEl.className = "at-phonetic";
+        const posHtml = payload.pos ? `<span class="at-pos">${escapeHtml(payload.pos)}</span>` : "";
+        const phonHtml = payload.phonetic ? `<span class="at-phonetic-text">${ICON.sound}${escapeHtml(payload.phonetic)}</span>` : "";
+        phoneticEl.innerHTML = `${posHtml}${phonHtml}`;
+        // 插入到原文区下方
+        const sourceEl = panel.querySelector(".at-source");
+        sourceEl.parentNode.insertBefore(phoneticEl, sourceEl.nextSibling);
+      }
+
       const div = document.createElement("div");
       div.className = "at-result";
       div.textContent = payload.text;
@@ -226,6 +265,50 @@
           copyBtn.classList.remove("is-done");
         }, 1500);
       };
+      if (examplesBtn) examplesBtn.disabled = false;
+    }
+  }
+
+  function setExamplesState(state, payload) {
+    if (!panel) return;
+    const section = panel.querySelector(".at-section-examples");
+    const divider = panel.querySelector(".at-divider-examples");
+    const wrap = panel.querySelector(".at-examples-wrap");
+    if (!section || !wrap) return;
+
+    section.classList.remove("hidden");
+    divider?.classList.remove("hidden");
+    wrap.innerHTML = "";
+
+    if (state === "loading") {
+      wrap.innerHTML = `
+        <div class="at-loading">
+          <span class="at-spinner"></span>
+          <span>正在生成例句…</span>
+        </div>`;
+    } else if (state === "error") {
+      wrap.innerHTML = `
+        <div class="at-error">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>${escapeHtml(payload.message)}</span>
+        </div>`;
+    } else if (state === "result") {
+      if (!payload.examples?.length) {
+        wrap.innerHTML = `<div class="at-examples-empty">暂无例句</div>`;
+        return;
+      }
+      const ul = document.createElement("ol");
+      ul.className = "at-examples-list";
+      payload.examples.forEach((ex, i) => {
+        const li = document.createElement("li");
+        li.className = "at-example-item";
+        li.innerHTML = `
+          <div class="at-example-en">${escapeHtml(ex.sentence)}</div>
+          <div class="at-example-zh">${escapeHtml(ex.translation)}</div>
+        `;
+        ul.appendChild(li);
+      });
+      wrap.appendChild(ul);
     }
   }
 
@@ -266,9 +349,38 @@
         setPanelState("error", { message: msg });
         return;
       }
-      setPanelState("result", { text: resp.result.translated_text });
+      setPanelState("result", {
+        text: resp.result.translated_text,
+        phonetic: resp.result.phonetic,
+        pos: resp.result.pos,
+      });
     } catch (err) {
       setPanelState("error", { message: err.message || "网络错误" });
+    }
+  }
+
+  async function doExamples(word) {
+    if (!panel) return;
+    const btn = panel.querySelector(".at-examples-btn");
+    if (btn) btn.disabled = true;
+    setExamplesState("loading");
+
+    try {
+      const resp = await chrome.runtime.sendMessage({
+        type: "GET_EXAMPLES",
+        word,
+        targetLang: cachedTargetLang,
+        count: 3,
+      });
+      if (!resp?.ok) {
+        setExamplesState("error", { message: resp?.error || "获取例句失败" });
+        return;
+      }
+      setExamplesState("result", { examples: resp.examples });
+    } catch (err) {
+      setExamplesState("error", { message: err.message || "网络错误" });
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 

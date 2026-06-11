@@ -292,6 +292,109 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ---------- 读音 / 词性 ---------- */
+#ai-translate-panel .at-phonetic {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+#ai-translate-panel .at-pos {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+#ai-translate-panel .at-phonetic-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #6366f1;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+}
+
+#ai-translate-panel .at-phonetic-text svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ---------- 例句区域 ---------- */
+#ai-translate-panel .hidden {
+  display: none !important;
+}
+
+#ai-translate-panel .at-section-examples {
+  padding-top: 8px;
+  padding-bottom: 12px;
+}
+
+#ai-translate-panel .at-examples-list {
+  all: unset;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  counter-reset: ex-counter;
+  padding: 0;
+  margin: 0;
+}
+
+#ai-translate-panel .at-example-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 18px;
+  position: relative;
+  counter-increment: ex-counter;
+}
+
+#ai-translate-panel .at-example-item::before {
+  content: counter(ex-counter);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #a5b4fc;
+  line-height: 1.5;
+  min-width: 14px;
+}
+
+#ai-translate-panel .at-example-en {
+  font-size: 13px;
+  color: #1f2937;
+  font-weight: 500;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+#ai-translate-panel .at-example-zh {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+#ai-translate-panel .at-examples-empty {
+  font-size: 12.5px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 6px 0;
+}
+
 /* ---------- 暗色模式 ---------- */
 @media (prefers-color-scheme: dark) {
   #ai-translate-toolbar,
@@ -356,5 +459,33 @@
   #ai-translate-panel .at-action.is-done {
     background: rgba(5, 150, 105, 0.2);
     color: #6ee7b7;
+  }
+
+  /* 暗色：读音 / 词性 */
+  #ai-translate-panel .at-pos {
+    color: #c4b5fd;
+    background: rgba(124, 58, 237, 0.18);
+    border-color: rgba(124, 58, 237, 0.35);
+  }
+
+  #ai-translate-panel .at-phonetic-text {
+    color: #a5b4fc;
+  }
+
+  /* 暗色：例句 */
+  #ai-translate-panel .at-example-en {
+    color: #e2e8f0;
+  }
+
+  #ai-translate-panel .at-example-zh {
+    color: #94a3b8;
+  }
+
+  #ai-translate-panel .at-example-item::before {
+    color: #6366f1;
+  }
+
+  #ai-translate-panel .at-examples-empty {
+    color: #64748b;
   }
 }

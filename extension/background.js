@@ -179,6 +179,18 @@ const HANDLERS = {
   async GET_TARGET_LANG() {
     return { targetLang: await getTargetLang() };
   },
+
+  async GET_EXAMPLES(msg) {
+    const data = await apiRequest("/api/translate/examples", {
+      method: "POST",
+      body: JSON.stringify({
+        word: msg.word,
+        target_lang: msg.targetLang || (await getTargetLang()),
+        count: msg.count || 3,
+      }),
+    });
+    return { ok: true, examples: data.examples };
+  },
 };
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

@@ -42,8 +42,26 @@ class TranslateResponse(BaseModel):
     is_favorited: bool = False
     is_pending: bool = False
     created_at: datetime
+    # 单词时由 LLM 附加，不入库
+    phonetic: str | None = None
+    pos: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ExamplesRequest(BaseModel):
+    word: str = Field(min_length=1, max_length=200)
+    target_lang: str = Field(default="zh", max_length=16)
+    count: int = Field(default=3, ge=1, le=6)
+
+
+class ExampleItem(BaseModel):
+    sentence: str
+    translation: str
+
+
+class ExamplesResponse(BaseModel):
+    examples: list[ExampleItem]
 
 
 class HistoryListResponse(BaseModel):
